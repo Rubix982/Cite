@@ -20,16 +20,12 @@ from src.LRU import lrucache
 load_dotenv()
 
 def MainServerController():
-    
+
     Proxy()
 
 def Proxy():
     port_addr = (str(os.environ['HOSTNAME']), int(os.environ['PORT']))
     LFU_CACHE_SIZE, LRU_CACHE_SIZE = int(os.environ['LFU_CACHE_SIZE']), int(os.environ['LRU_CACHE_SIZE'])
-
-    # Caching mechanisms
-    # lru_cache = lrucache(LRU_CACHE_SIZE)
-    # lfu_cache = LFUCache(LFU_CACHE_SIZE)
 
     '''
     https://docs.python.org/3.6/library/ssl.html#ssl.Purpose.CLIENT_AUTH
@@ -53,10 +49,14 @@ def Proxy():
     tcpSerSock.listen(40)
 
     while True:
+
         # Start receiving data from the client
         print(f'\nReady to serve at {port_addr}')
         tcpCliSock, addr = tcpSerSock.accept()
+
+        # Throws HTTPS_PROXY_REQUEST error. I can't figure out why
         # tcpCliSock = context.wrap_socket(tcpCliSock)
+        
         print('Received a connection from:', addr)
         message = tcpCliSock.recv(int(os.environ['BYTE_SIZE'])).decode('utf-8', 'ignore')
 
@@ -79,11 +79,6 @@ def Proxy():
                         'This is one of the blocked domains. Forbidden 403!\r\n')
                     continue
 
-        if filename.endswith('txt'):
-            extension = ''
-        else:
-            extension = 'html'
-
         try:
             response = requests.get(f"https://{filename}", verify=False)
         except:
@@ -93,8 +88,6 @@ def Proxy():
         # # START CACHING MECHANISM
         # CachingMechanism()
         # # END CACHING MECHANISM
-
-        tcpCliSock.send(b"\r\n")
 
         try:
             tcpCliSock.send(response.content + b"\r\n")
@@ -106,6 +99,9 @@ def Proxy():
     tcpCliSock.close()
 
 def CachingMechanism():
+    lru_cache = lrucache(LRU_CACHE_SIZE)
+    lfu_cache = LFUCache(LFU_CACHE_SIZE)
+
     # Check wether the file exist in the cache
     cache_file_path = f"cache/{filename}.{extension}"
 
