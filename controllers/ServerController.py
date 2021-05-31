@@ -60,11 +60,10 @@ def Proxy():
         print('Received a connection from:', addr)
         message = tcpCliSock.recv(int(os.environ['BYTE_SIZE'])).decode('utf-8', 'ignore')
 
-        if len(message.split(' ')) > 0:
-            if message.split(' ')[1] == 'http://detectportal.firefox.com/success.txt' or message.split(' ')[1] == 'incoming.telemetry.mozilla.org:443':
-                continue
-        else:
+        if message == '':
             continue
+
+        print(f'\'{message}\'')
 
         # Extract the filename from the given message
         if message.split(' ')[1].startswith('http') or message.split(' ')[1].startswith('https'):
@@ -80,7 +79,7 @@ def Proxy():
                     continue
 
         try:
-            response = requests.get(f"https://{filename}", verify=False)
+            response = requests.get(f"http://{filename}", verify=False)
         except:
             print(f"Not found {filename}")
             continue
